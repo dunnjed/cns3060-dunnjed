@@ -1,4 +1,6 @@
 Jed Dunn
 ============== 
 
-Personal repository for dunnjed for projects for 3060
+CS3060
+Section 601
+Contact Email: dunnjed85@gmail.com
