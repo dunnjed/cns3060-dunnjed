@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv)
 {
-	printf("Jed Dunn\nCNS3060\n");
+	printf("Jed Dunn\nCNS 3060\n");
 	
 	int i;
 	if(argc > 1)
