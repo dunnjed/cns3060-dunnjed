@@ -17,3 +17,6 @@ project-2/cat1
 #I don't need them to be uploaded to github.
 project-2/file1
 project-2/file2
+project-2/tags
+
+*.swp
