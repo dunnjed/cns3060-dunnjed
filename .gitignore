@@ -12,3 +12,8 @@
 *.a
 project-1/project-1
 project-2/cat1
+
+#These are test files to use with my cat1 program.
+#I don't need them to be uploaded to github.
+project-2/file1
+project-2/file2
