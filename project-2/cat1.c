@@ -7,9 +7,9 @@ typedef enum args{frmStdinWithLineNum,frmStdinWO_LineNum,frmFileWithLineNum,frmF
 
 void printInputWithLineNums(void);
 void printInputWO_LineNums(void);
-void printFileWithLineNums(void);
-void printFileWO_LineNums(void);
-args checkCmdLineArgs(int argc, char* argv[]);
+void printFileWithLineNums(int argc, char *argv[]);
+void printFileWO_LineNums(int argc, char *argv[]);
+args checkCmdLineArgs(int argc, char *argv[]);
 
 
 char printLineNum[] = "-n";
@@ -18,7 +18,7 @@ int newLine  = 13;
 //fopen();
 
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     args option;
     option = checkCmdLineArgs(argc,argv);
@@ -34,11 +34,11 @@ int main(int argc, char* argv[])
     }
     else if(option == frmFileWithLineNum)
     {
-        printFileWithLineNums();
+        printFileWithLineNums(argc,argv);
     }
     else if(option == frmFileWO_LineNum)
     {
-        printFileWO_LineNums();
+        printFileWO_LineNums(argc,argv);
     }
     else//Then print typed input to standard output without line numbers.
     {
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-args checkCmdLineArgs(int argc, char* argv[])
+args checkCmdLineArgs(int argc, char *argv[])
 {
     //If the argument list contains 2 args, and the second arg is "-n",
     //then that means the input comes from standard input and it is
@@ -83,14 +83,107 @@ args checkCmdLineArgs(int argc, char* argv[])
 
 }   
 
-void printFileWithLineNums()
+//This is guaranteed to have 3 more more arguments in argv with the 
+//second argument being "-n". The checkCmdLineArgs function already
+//verified this.
+void printFileWithLineNums(int argc, char *argv[])
 {
-    
+    int i;
+    for(i = 2; i < argc; i++)
+    {
+        FILE *in;
+        in = fopen(argv[i],"r");
+        if(in == NULL)
+        {
+            perror(argv[i]);
+            //printf("%p\n",in);
+
+        }
+
+        else
+        {   
+            const int BUF_SIZE = 128;
+            char buffer[BUF_SIZE];
+            size_t result;
+            int errorFlag;
+            int eofFlag;
+
+            memset(buffer,0,BUF_SIZE);
+            buffer[BUF_SIZE - 1] = '\0';
+
+            result = fread(buffer,sizeof(char),BUF_SIZE - 1,in);
+            
+            errorFlag = ferror(in);
+            eofFlag = feof(in);
+            //clearerr(in);
+
+            while(result == BUF_SIZE - 1)
+            {   
+                printf("%s",buffer);
+                result = fread(buffer,sizeof(char),BUF_SIZE - 1,in);
+                
+                errorFlag = ferror(in);
+                eofFlag = feof(in);
+
+
+            }
+
+            //This if statement is entered if the file reached EOF
+            //I can safely print out the remaing part of the buffer
+            //that still contains data from the file.
+            if(eofFlag != 0)//feof returns a nonzero value if there was an error
+            {
+                buffer[result] = '\0';
+                printf("%s",buffer);
+            }
+            else if(errorFlag != 0)
+            {
+                printf("An error occured, cannot read the rest of %s.",argv[i]);
+            }
+
+            fflush(in);//Flush the buffer before reading in a new file.
+            
+        }
+    }
 
 }
 
-void printFileWO_LineNums()
+//This is guaranteed to have 2 more more arguments in argv with the 
+//second argument being the first file name, with possibly more file names
+//coming after the first file name.
+//The checkCmdLineArgs function already verified this.
+void printFileWO_LineNums(int argc, char *argv[])
 {
+    
+    int i;
+    for(i = 0; i < argc; i++)
+    {
+        printf("%s\n",argv[i]);
+    }
+
+    FILE *in;
+    in = fopen(argv[1],"r");
+    printf("%p\n",in);
+
+    char buffer[128];
+    size_t result;
+
+    result = fread(buffer,sizeof(char),sizeof(buffer),in);
+
+
+    printf("%s",buffer);
+    printf("%d\n",result);
+    int j;
+    for(j = 0; j < 128; j++)
+    {
+        printf("%c",buffer[j]);
+    }
+    printf("\n");
+    if(buffer[18] == '\n')
+        printf("true\n");
+    else 
+        printf("false");
+    printf("%c",buffer[18]);
 
 
 }
