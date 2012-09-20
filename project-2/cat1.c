@@ -10,14 +10,12 @@ const short PRINT_WITHOUT_LINE_NUMS = 0;
 void printInputWithLineNums(void);
 void printInputWO_LineNums(void);
 void printFile(int argc, char *argv[],short printLineNums,int argStartIndex);
-void printFileWO_LineNums(int argc, char *argv[]);
+void printFileLineNumbers(char buffer[], int *lineNum, size_t result, short endOfFile,short lastFile);
 args checkCmdLineArgs(int argc, char *argv[]);
 
 
 char printLineNum[] = "-n";
-int newLine  = 13;
-
-//fopen();
+//int newLine  = 13;
 
 
 int main(int argc, char *argv[])
@@ -88,11 +86,13 @@ args checkCmdLineArgs(int argc, char *argv[])
 
 }   
 
-//This is guaranteed to have 3 more more arguments in argv with the 
-//second argument being "-n". The checkCmdLineArgs function already
-//verified this.
+//When this function is called, we know that there were fileName arguments
+//passed to cat1
 void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
 {
+    int lineNum = 0;
+    const short END_OF_FILE = 1;
+
     int i;
     for(i = argStartIndex; i < argc; i++)
     {
@@ -100,16 +100,15 @@ void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
         in = fopen(argv[i],"r");
         if(in == NULL)
         {
+            //An error message is printed out if the file cannot be opened.
             perror(argv[i]);
-            //printf("%p\n",in);
-
         }
 
         else
         {   
             const int BUF_SIZE = 128;
             const int CHARS_IN_BUF = 127;
-            int lineNum = 0;
+            //int lineNum = 0;
             char buffer[BUF_SIZE];
             size_t result;
             int errorFlag;
@@ -117,7 +116,6 @@ void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
             
             //Set all of the locations in the buffer to null;
             memset(buffer,'\0',BUF_SIZE);
-            //buffer[BUF_SIZE - 1] = '\0';
 
             //Copy in data into all of the spots of the buffer except for the
             //last spot, which is already '\0',which will make this buffer
@@ -125,27 +123,18 @@ void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
             //using printf.
             result = fread(buffer,sizeof(char),CHARS_IN_BUF,in);
             
+            //These flags will be set if "result" does not equal "CHARS_IN_BUF"
             errorFlag = ferror(in);
             eofFlag = feof(in);
-            //clearerr(in);
-            
                         
-
+            //while the buffer is successfully filled with input
             while(result == CHARS_IN_BUF)
             {   
                 if(printLineNums)
                 {   
-                    if(lineNum == 0)
-                    {
-                        printf("%6d  ",++lineNum);
-                    }   
-                    int j;
-                    for(j = 0;j < BUF_SIZE;j++)
-                    {
-                        putchar(buffer[j]);
-                        if(buffer[j] == '\n' && j != BUF_SIZE-1)
-                            printf("%6d  ",++lineNum);
-                    }
+                    //In the last argument of this function call "i == argc-1" will tell me
+                    //if I am currently processing the last file or not.
+                    printFileLineNumbers(buffer,&lineNum,BUF_SIZE,!END_OF_FILE,i == argc-1);
                 }
                 else
                     printf("%s",buffer);
@@ -162,22 +151,14 @@ void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
             //This if statement is entered if the file reached EOF
             //I can safely print out the remaing part of the buffer
             //that still contains data from the file.
-            if(eofFlag != 0)//feof returns a nonzero value if there was an error
+            if(eofFlag != 0)//feof returns a nonzero value if the end of file was reached
             {
-                buffer[result] = '\0';
+                buffer[result] = '\0';//Terminates the remaing buffer input with '\0' so that it will print out correctly with printf
                 if(printLineNums)
                 {   
-                    if(lineNum == 0)
-                    {
-                        printf("%6d  ",++lineNum);
-                    }   
-                    int j;
-                    for(j = 0;j < result;j++)
-                    {
-                        putchar(buffer[j]);
-                        if(buffer[j] == '\n' && j != result-1)
-                            printf("%6d  ",++lineNum);
-                    }
+                    //In the last argument of this function call "i == argc-1" will tell me
+                    //if I am currently processing the last file or not.
+                    printFileLineNumbers(buffer,&lineNum,result,END_OF_FILE,i == argc-1);
                 }               
                 else
                     printf("%s",buffer);
@@ -187,27 +168,36 @@ void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
             {
                 printf("An error occured, cannot read the rest of %s.",argv[i]);
             }
-            
 
-            //fflush(in);//Flush the buffer before reading in a new file.
-            
             //clear the error flags
             clearerr(in);
 
         }
 
-        fclose(in);
+        fclose(in);//Close the file
     }
 
 }
 
-//This is guaranteed to have 2 more more arguments in argv with the 
-//second argument being the first file name, with possibly more file names
-//coming after the first file name.
-//The checkCmdLineArgs function already verified this.
-void printFileWO_LineNums(int argc, char *argv[])
+void printFileLineNumbers(char buffer[], int *lineNum, size_t result, short endOfFile,short lastFile)
 {
-    //I don't need this function anymore. 
+    if(*lineNum == 0)
+    {
+        printf("%6d  ",++(*lineNum));
+    }   
+    int j;
+    for(j = 0;j < result;j++)
+    {
+        putchar(buffer[j]);
+        
+        if(buffer[j] == '\n')
+        {
+            //I only want to avoid printing out a new line number
+            //if I have reached the end of the last file.
+            if(!(endOfFile && lastFile && j == result-1))
+                printf("%6d  ",++(*lineNum));
+        }
+    }
 
 }
 
