@@ -4,10 +4,12 @@
 
 typedef enum args{frmStdinWithLineNum,frmStdinWO_LineNum,frmFileWithLineNum,frmFileWO_LineNum,invalidOption}args;
 
+const short PRINT_WITH_LINE_NUMS = 1;
+const short PRINT_WITHOUT_LINE_NUMS = 0;
 
 void printInputWithLineNums(void);
 void printInputWO_LineNums(void);
-void printFileWithLineNums(int argc, char *argv[]);
+void printFile(int argc, char *argv[],short printLineNums,int argStartIndex);
 void printFileWO_LineNums(int argc, char *argv[]);
 args checkCmdLineArgs(int argc, char *argv[]);
 
@@ -33,12 +35,15 @@ int main(int argc, char *argv[])
         printf("Invalid Option Entered\n");
     }
     else if(option == frmFileWithLineNum)
-    {
-        printFileWithLineNums(argc,argv);
+    {   
+        int argStartIndex = 2;
+        printFile(argc,argv,PRINT_WITH_LINE_NUMS,argStartIndex);
     }
     else if(option == frmFileWO_LineNum)
     {
-        printFileWO_LineNums(argc,argv);
+        int argStartIndex = 1;
+        printFile(argc,argv,PRINT_WITHOUT_LINE_NUMS,argStartIndex);
+
     }
     else//Then print typed input to standard output without line numbers.
     {
@@ -86,10 +91,10 @@ args checkCmdLineArgs(int argc, char *argv[])
 //This is guaranteed to have 3 more more arguments in argv with the 
 //second argument being "-n". The checkCmdLineArgs function already
 //verified this.
-void printFileWithLineNums(int argc, char *argv[])
+void printFile(int argc, char *argv[],short printLineNums,int argStartIndex)
 {
     int i;
-    for(i = 2; i < argc; i++)
+    for(i = argStartIndex; i < argc; i++)
     {
         FILE *in;
         in = fopen(argv[i],"r");
@@ -104,6 +109,7 @@ void printFileWithLineNums(int argc, char *argv[])
         {   
             const int BUF_SIZE = 128;
             const int CHARS_IN_BUF = 127;
+            int lineNum = 0;
             char buffer[BUF_SIZE];
             size_t result;
             int errorFlag;
@@ -122,10 +128,29 @@ void printFileWithLineNums(int argc, char *argv[])
             errorFlag = ferror(in);
             eofFlag = feof(in);
             //clearerr(in);
+            
+                        
 
             while(result == CHARS_IN_BUF)
             {   
-                printf("%s",buffer);
+                if(printLineNums)
+                {   
+                    if(lineNum == 0)
+                    {
+                        printf("%6d  ",++lineNum);
+                    }   
+                    int j;
+                    for(j = 0;j < BUF_SIZE;j++)
+                    {
+                        putchar(buffer[j]);
+                        if(buffer[j] == '\n' && j != BUF_SIZE-1)
+                            printf("%6d  ",++lineNum);
+                    }
+                }
+                else
+                    printf("%s",buffer);
+
+
                 result = fread(buffer,sizeof(char),CHARS_IN_BUF,in);
                 
                 errorFlag = ferror(in);
@@ -140,7 +165,23 @@ void printFileWithLineNums(int argc, char *argv[])
             if(eofFlag != 0)//feof returns a nonzero value if there was an error
             {
                 buffer[result] = '\0';
-                printf("%s",buffer);
+                if(printLineNums)
+                {   
+                    if(lineNum == 0)
+                    {
+                        printf("%6d  ",++lineNum);
+                    }   
+                    int j;
+                    for(j = 0;j < result;j++)
+                    {
+                        putchar(buffer[j]);
+                        if(buffer[j] == '\n' && j != result-1)
+                            printf("%6d  ",++lineNum);
+                    }
+                }               
+                else
+                    printf("%s",buffer);
+
             }
             else if(errorFlag != 0)
             {
@@ -166,8 +207,7 @@ void printFileWithLineNums(int argc, char *argv[])
 //The checkCmdLineArgs function already verified this.
 void printFileWO_LineNums(int argc, char *argv[])
 {
-    
-    
+    //I don't need this function anymore. 
 
 }
 
@@ -184,10 +224,10 @@ void printInputWithLineNums(void)
     {
         if((newLineCount % 2) == 0)
         {
-            printf("     %d  ",++lineNum);
+            printf("%6d  ",++lineNum);
             newLineCount++;
         }
-        if(c != 10)
+        if(c != 10)//10 is newline in ASCII
         {
             putchar(c);
         }

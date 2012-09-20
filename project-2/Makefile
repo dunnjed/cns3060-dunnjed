@@ -7,4 +7,4 @@ clean:
 	rm cat1
 
 run:all
-	./cat1 -n myFile myFile2
+	./cat1 -n myFile myFile2 
