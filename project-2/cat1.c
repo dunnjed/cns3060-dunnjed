@@ -103,24 +103,30 @@ void printFileWithLineNums(int argc, char *argv[])
         else
         {   
             const int BUF_SIZE = 128;
+            const int CHARS_IN_BUF = 127;
             char buffer[BUF_SIZE];
             size_t result;
             int errorFlag;
             int eofFlag;
+            
+            //Set all of the locations in the buffer to null;
+            memset(buffer,'\0',BUF_SIZE);
+            //buffer[BUF_SIZE - 1] = '\0';
 
-            memset(buffer,0,BUF_SIZE);
-            buffer[BUF_SIZE - 1] = '\0';
-
-            result = fread(buffer,sizeof(char),BUF_SIZE - 1,in);
+            //Copy in data into all of the spots of the buffer except for the
+            //last spot, which is already '\0',which will make this buffer
+            //a null terminated string. It will now print out correctly
+            //using printf.
+            result = fread(buffer,sizeof(char),CHARS_IN_BUF,in);
             
             errorFlag = ferror(in);
             eofFlag = feof(in);
             //clearerr(in);
 
-            while(result == BUF_SIZE - 1)
+            while(result == CHARS_IN_BUF)
             {   
                 printf("%s",buffer);
-                result = fread(buffer,sizeof(char),BUF_SIZE - 1,in);
+                result = fread(buffer,sizeof(char),CHARS_IN_BUF,in);
                 
                 errorFlag = ferror(in);
                 eofFlag = feof(in);
@@ -140,10 +146,16 @@ void printFileWithLineNums(int argc, char *argv[])
             {
                 printf("An error occured, cannot read the rest of %s.",argv[i]);
             }
-
-            fflush(in);//Flush the buffer before reading in a new file.
             
+
+            //fflush(in);//Flush the buffer before reading in a new file.
+            
+            //clear the error flags
+            clearerr(in);
+
         }
+
+        fclose(in);
     }
 
 }
@@ -155,36 +167,7 @@ void printFileWithLineNums(int argc, char *argv[])
 void printFileWO_LineNums(int argc, char *argv[])
 {
     
-    int i;
-    for(i = 0; i < argc; i++)
-    {
-        printf("%s\n",argv[i]);
-    }
-
-    FILE *in;
-    in = fopen(argv[1],"r");
-    printf("%p\n",in);
-
-    char buffer[128];
-    size_t result;
-
-    result = fread(buffer,sizeof(char),sizeof(buffer),in);
-
-
-    printf("%s",buffer);
-    printf("%d\n",result);
-    int j;
-    for(j = 0; j < 128; j++)
-    {
-        printf("%c",buffer[j]);
-    }
-    printf("\n");
-    if(buffer[18] == '\n')
-        printf("true\n");
-    else 
-        printf("false");
-    printf("%c",buffer[18]);
-
+    
 
 }
 
