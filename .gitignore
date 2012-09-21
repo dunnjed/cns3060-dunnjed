@@ -15,8 +15,13 @@ project-2/cat1
 
 #These are test files to use with my cat1 program.
 #I don't need them to be uploaded to github.
-project-2/file1
-project-2/file2
+project-2/myFile
+project-2/myFile2
+project-2/myFile3
+project-2/myFile4
+project-2/myFile5
+
+
 project-2/tags
 
 *.swp
