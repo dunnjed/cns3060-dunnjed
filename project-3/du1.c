@@ -129,55 +129,106 @@ int isHidden(char *fileName, boolean inStartDirectory)
         return IS_HIDDEN;
     else if(strlen(fileName) == 2 && fileName[0] == '.' && fileName[1] == '.')// .. is always hidden
         return IS_HIDDEN;
+    else if(strlen(fileName) > 1 && fileName[0] == '.')//If I'm in the start director -- THIS LINE WAS  else if(inStartDirectory && strlen(fileName) > 1 && fileName[0] == '.')
+        return IS_HIDDEN;
     else
         return IS_NOT_HIDDEN;
-}
+    }
 
 
 
-
-void printDirContents(DIR *currentDir,char* dirPath, boolean inStartDirectory)
+//dirPath contains the path to the current directory being processed without the trailing "/"
+void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
 {
-
+     
     
     struct dirent* dirItem = 0;
     
-    while((dirItem = readdir(currentDir)) != NULL)
+    while((dirItem = readdir(currentDIR)) != NULL)
     {
         struct stat info;
 
-        if(stat(dirItem->d_name,&info) == -1)
+        int slashLength = 1;
+        char *fullDirPath = calloc(strlen(dirPath) + slashLength + strlen(dirItem->d_name) + 1,sizeof(char));
+        strcpy(fullDirPath,dirPath);
+        strcat(fullDirPath,"/");
+        strcat(fullDirPath,dirItem->d_name);
+        strcat(fullDirPath,"\0");
+        //fullDirPath will contain the previous "dirPath" value and then have appended to it the
+        //dirItem->d_name string, which is the newly found subdirectory in the current directory.
+        //For example, if I am currenlty in dir1, and dirItem->d_name is a directory called dir2, then
+        //fullDirPath will now be "dir1/dir2". 
+
+               
+        //If you are not in the start directory 
+        if(stat(fullDirPath,&info) == -1)
             perror(dirItem->d_name);//can't open dirItem. 
 
         else
         {
-           
-            if(!isHidden(dirItem->d_name, inStartDirectory))
+            if(inStartDirectory)
             {
+                /*
+                int slashLength = 1;
+                char *fullDirPath = calloc(strlen(dirPath) + slashLength + strlen(dirItem->d_name) + 1,sizeof(char));
+                strcpy(fullDirPath,dirPath);
+                strcat(fullDirPath,"/");
+                strcat(fullDirPath,dirItem->d_name);
+                strcat(fullDirPath,"\0");
+                //fullDirPath will contain the previous "dirPath" value and then have appended to it the
+                //dirItem->d_name string, which is the newly found subdirectory in the current directory.
+                //For example, if I am currenlty in dir1, and dirItem->d_name is a directory called dir2, then
+                //fullDirPath will now be "dir1/dir2".           
                 
-                if(isDirectory(&info))// && dirItem->d_name[0] != '.')
+                */
+
+
+                if(!isHidden(dirItem->d_name,inStartDirectory) && isDirectory(&info) && dirItem->d_name[0] != '.')
                 {
-                        //DIR *newDir = opendir(dir->d_name);
-                        //printDirContents(newDir,dir->d_name);
-                        int slashLength = 1;
-                        char *fullDirPath = calloc(strlen(dirPath) + slashLength + strlen(dirItem->d_name) + 1,sizeof(char));
-                        strcpy(fullDirPath,dirPath);
-                        strcat(fullDirPath,"/");
-                        strcat(fullDirPath,dirItem->d_name);
-                        strcat(fullDirPath,"\0");
-
-                        
-                        DIR *newDir = opendir(fullDirPath);
-                        printDirContents(newDir,fullDirPath,NOT_IN_START_DIRECTORY);
-
-                        printf("%s\n",fullDirPath);
-                        //printf("%s/%s\n",dirPath,dir->d_name); 
+                    DIR* dir = opendir(fullDirPath);
+                    if(dir == NULL)
+                        perror(fullDirPath);
+                    else
+                       printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
+             
+                    
+                    
+                      
+                    printf("%s\n",fullDirPath);
 
                 }
-                else
+                else if(!isHidden(dirItem->d_name,inStartDirectory))
                     printf("%s\n",dirItem->d_name);
+            }
+            else//NOT IN START DIRECTORY
+            {
+                if(!isHidden(dirItem->d_name,inStartDirectory) && isDirectory(&info))
+                {
+                    DIR* dir = opendir(fullDirPath);
+                    if(dir == NULL)
+                        perror(fullDirPath);
+                    else
+                       printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
+             
+                    
+                    printf("%s\n",fullDirPath);
 
-           }
+                }
+                else if(!isHidden(dirItem->d_name,inStartDirectory))
+                    printf("%s\n",fullDirPath);
+
+
+
+
+
+
+                /*
+                if(!isHidden(dirItem->d_name,inStartDirectory))
+                    printf("%s\n",fullDirPath);
+
+                    */
+
+            }
         }
     }
 
