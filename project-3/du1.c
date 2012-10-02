@@ -3,25 +3,44 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
+
+typedef int boolean;
+#define IN_START_DIRECTORY 1
+#define NOT_IN_START_DIRECTORY 0
+#define IS_HIDDEN 1
+#define IS_NOT_HIDDEN 0
+
+int isHidden(char *fileName, boolean inStartDirectory);
+int isDirectory(struct stat *info);
+void printDirContents(DIR *currentDir,char* dirPath, boolean inStartDirectory);
 
 
+char* currentDirPath = ".";
 
 int main(int argc, char *argv[])
 {
     printf("\nProgram starts here:\n");
    
-    /*
-    const size_t BUF_SIZE = 256;
-    char buf[BUF_SIZE];
-    
-    char dirNameTooLong; 
-    if( (dirNameTooLong = getcwd(buf,BUF_SIZE)) != '\0')
-        ;
+       
+    if(argc == 1)
+    {
+        //then I have no arguments
+        DIR* currentDir = opendir(currentDirPath);
+        if(currentDir == NULL)
+        {
+            perror(currentDirPath);
+            return -1;
+        }
+        else
+           printDirContents(currentDir, currentDirPath, IN_START_DIRECTORY);
+    }
 
-    printf("%d\n",dirNameTooLong);
-    printf("%s\n",buf);
-*/
-    //Get full path of the current directory.
+
+
+
+
+    /*
     char* dirName = (char*)get_current_dir_name();
     printf("%s\n",dirName);
     free(dirName);//dirName is malloced, you need to free dirName.  
@@ -41,7 +60,7 @@ int main(int argc, char *argv[])
         {
             
             printf("%-12s",dir->d_name);
-            printf("%-12lld",info.st_size);
+            printf("%-lldB",info.st_size);
 
             switch(S_IFMT & info.st_mode)
             {
@@ -75,9 +94,95 @@ int main(int argc, char *argv[])
         }
     }
     
-    
+    */
 
 
 
    return 0; 
 }
+
+
+int isDirectory(struct stat *info)
+{
+    int directory  = 0;
+
+    switch(S_IFMT & info->st_mode)
+    {
+        case S_IFDIR:
+            directory = 1;//The struct stat is a directory.
+            break;
+        default:
+            directory = 0;//The struct stat is a file.
+            break;
+
+    }
+
+    return directory;
+}
+
+
+int isHidden(char *fileName, boolean inStartDirectory)
+{
+    if(inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is not hidden in the start directory
+        return IS_NOT_HIDDEN;
+    else if(!inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is hidden in subdirectories
+        return IS_HIDDEN;
+    else if(strlen(fileName) == 2 && fileName[0] == '.' && fileName[1] == '.')// .. is always hidden
+        return IS_HIDDEN;
+    else
+        return IS_NOT_HIDDEN;
+}
+
+
+
+
+void printDirContents(DIR *currentDir,char* dirPath, boolean inStartDirectory)
+{
+
+    
+    struct dirent* dirItem = 0;
+    
+    while((dirItem = readdir(currentDir)) != NULL)
+    {
+        struct stat info;
+
+        if(stat(dirItem->d_name,&info) == -1)
+            perror(dirItem->d_name);//can't open dirItem. 
+
+        else
+        {
+           
+            if(!isHidden(dirItem->d_name, inStartDirectory))
+            {
+                
+                if(isDirectory(&info))// && dirItem->d_name[0] != '.')
+                {
+                        //DIR *newDir = opendir(dir->d_name);
+                        //printDirContents(newDir,dir->d_name);
+                        int slashLength = 1;
+                        char *fullDirPath = calloc(strlen(dirPath) + slashLength + strlen(dirItem->d_name) + 1,sizeof(char));
+                        strcpy(fullDirPath,dirPath);
+                        strcat(fullDirPath,"/");
+                        strcat(fullDirPath,dirItem->d_name);
+                        strcat(fullDirPath,"\0");
+
+                        
+                        DIR *newDir = opendir(fullDirPath);
+                        printDirContents(newDir,fullDirPath,NOT_IN_START_DIRECTORY);
+
+                        printf("%s\n",fullDirPath);
+                        //printf("%s/%s\n",dirPath,dir->d_name); 
+
+                }
+                else
+                    printf("%s\n",dirItem->d_name);
+
+           }
+        }
+    }
+
+
+
+}
+
+
