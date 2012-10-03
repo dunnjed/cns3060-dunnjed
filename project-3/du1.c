@@ -11,7 +11,9 @@ typedef int boolean;
 #define IS_HIDDEN 1
 #define IS_NOT_HIDDEN 0
 
-int isHidden(char *fileName, boolean inStartDirectory);
+#define BUF_SIZE 128
+
+int isHidden(char *fileName, boolean isA_Directory);
 int isDirectory(struct stat *info);
 void printDirContents(DIR *currentDir,char* dirPath, boolean inStartDirectory);
 
@@ -34,67 +36,46 @@ int main(int argc, char *argv[])
         }
         else
            printDirContents(currentDir, currentDirPath, IN_START_DIRECTORY);
+
+        closedir(currentDir);
     }
-
-
-
-
-
-    /*
-    char* dirName = (char*)get_current_dir_name();
-    printf("%s\n",dirName);
-    free(dirName);//dirName is malloced, you need to free dirName.  
-   
-    const char* currentRootDirName = "."; 
-    DIR* currentDir = opendir(currentRootDirName);
-    struct dirent* dir = 0;
-    
-    while((dir = readdir(currentDir)) != NULL)
+    else if(argc > 1)
     {
-        struct stat info;
-
-        if(stat(dir->d_name,&info) == -1)
-            perror(dir->d_name);//can't open file
-
-        else
+        int i;
+        for(i = 1; i < argc; i++)
         {
-            
-            printf("%-12s",dir->d_name);
-            printf("%-lldB",info.st_size);
+            struct stat info;
 
-            switch(S_IFMT & info.st_mode)
+            if(stat(argv[i],&info) == -1)
+                perror(argv[i]);//can't open dirItem. 
+            else
             {
-                case S_IFSOCK:
-                    printf("socket");
-                    break;
-                case S_IFLNK:
-                    printf("symbolic link");
-                    break;
-                case S_IFREG:
-                    printf("regular file");
-                    break;
-                case S_IFBLK:
-                    printf("block device");
-                    break;
-                case S_IFDIR:
-                    printf("directory");
-                    break;
-                case S_IFCHR:
-                    printf("character device");
-                    break;
-                case S_IFIFO:
-                    printf("FIFO");
-                    break;
-                default:
-                    printf("Unknown file type");
-                    break;
+                if(isDirectory(&info))
+                {
+                    DIR* currentDir = opendir(argv[i]);
+                    if(currentDir == NULL)
+                    {
+                        perror(argv[i]);
+                        return -1;
+                    }
+                    else
+                       printDirContents(currentDir, argv[i], IN_START_DIRECTORY);
+
+                    closedir(currentDir);
+                }
+                else//It is a regular file
+                {
+                    char buffer[BUF_SIZE];
+                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                    printf("%-15s %s\n",buffer,argv[i]);
+                }
             }
 
-            printf("\n");
+
+            
         }
+
     }
-    
-    */
 
 
 
@@ -121,15 +102,18 @@ int isDirectory(struct stat *info)
 }
 
 
-int isHidden(char *fileName, boolean inStartDirectory)
-{
-    if(inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is not hidden in the start directory
-        return IS_NOT_HIDDEN;
-    else if(!inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is hidden in subdirectories
-        return IS_HIDDEN;
+int isHidden(char *fileName, boolean isA_Directory)
+{   
+    if(strlen(fileName) == 1 && fileName[0] == '.')// . is always hidden
+        return IS_HIDDEN;// was IS_NOT_HIDDEN
+
+    //if(inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is not hidden in the start directory
+    //    return IS_HIDDEN;// was IS_NOT_HIDDEN
+    //else if(!inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is hidden in subdirectories
+    //    return IS_HIDDEN;
     else if(strlen(fileName) == 2 && fileName[0] == '.' && fileName[1] == '.')// .. is always hidden
         return IS_HIDDEN;
-    else if(strlen(fileName) > 1 && fileName[0] == '.')//If I'm in the start director -- THIS LINE WAS  else if(inStartDirectory && strlen(fileName) > 1 && fileName[0] == '.')
+    else if(strlen(fileName) > 1 && fileName[0] == '.' && !isA_Directory)//all other files and directories that begin with . are always hidden.
         return IS_HIDDEN;
     else
         return IS_NOT_HIDDEN;
@@ -140,7 +124,27 @@ int isHidden(char *fileName, boolean inStartDirectory)
 //dirPath contains the path to the current directory being processed without the trailing "/"
 void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
 {
-     
+    
+    if(inStartDirectory)
+    {
+
+        struct stat tempInfo;
+
+        if(stat(dirPath,&tempInfo) == -1)
+            perror(dirPath);//can't open dirItem. 
+        else
+        {
+            char buffer[BUF_SIZE];
+            snprintf(buffer,BUF_SIZE,"%lld B",(long long)tempInfo.st_size);
+            printf("%-15s %s\n",buffer,dirPath);
+        }
+           
+        if(strcmp(dirPath,"/") == 0)//If the dirPath is "/" and I'm in the start directory, then I don't want to append another "/" to the fullDirPath in the upcoming while loop.
+            dirPath = "";
+    }
+
+
+
     
     struct dirent* dirItem = 0;
     
@@ -155,12 +159,11 @@ void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
         strcat(fullDirPath,dirItem->d_name);
         strcat(fullDirPath,"\0");
         //fullDirPath will contain the previous "dirPath" value and then have appended to it the
-        //dirItem->d_name string, which is the newly found subdirectory in the current directory.
+        //dirItem->d_name string, which is the newly found subdirectory or file  in the current directory.
         //For example, if I am currenlty in dir1, and dirItem->d_name is a directory called dir2, then
         //fullDirPath will now be "dir1/dir2". 
 
                
-        //If you are not in the start directory 
         if(stat(fullDirPath,&info) == -1)
             perror(dirItem->d_name);//can't open dirItem. 
 
@@ -168,65 +171,59 @@ void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
         {
             if(inStartDirectory)
             {
-                /*
-                int slashLength = 1;
-                char *fullDirPath = calloc(strlen(dirPath) + slashLength + strlen(dirItem->d_name) + 1,sizeof(char));
-                strcpy(fullDirPath,dirPath);
-                strcat(fullDirPath,"/");
-                strcat(fullDirPath,dirItem->d_name);
-                strcat(fullDirPath,"\0");
-                //fullDirPath will contain the previous "dirPath" value and then have appended to it the
-                //dirItem->d_name string, which is the newly found subdirectory in the current directory.
-                //For example, if I am currenlty in dir1, and dirItem->d_name is a directory called dir2, then
-                //fullDirPath will now be "dir1/dir2".           
                 
-                */
+                // The . directory isn't considered hidden when I'm in the start directory, but I don't want to traverse it
 
-
-                if(!isHidden(dirItem->d_name,inStartDirectory) && isDirectory(&info) && dirItem->d_name[0] != '.')
+                if(!isHidden(dirItem->d_name,isDirectory(&info)) && isDirectory(&info))// && dirItem->d_name[0] != '.')
                 {
                     DIR* dir = opendir(fullDirPath);
                     if(dir == NULL)
                         perror(fullDirPath);
                     else
                        printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
-             
                     
+                    closedir(dir);
                     
-                      
-                    printf("%s\n",fullDirPath);
+                    char buffer[BUF_SIZE];
+                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                    printf("%-15s %s\n",buffer,fullDirPath);                   
+                }
+                else if(!isHidden(dirItem->d_name,isDirectory(&info)))
+                {
+                    char buffer[BUF_SIZE];
+                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                    printf("%-15s %s\n",buffer,fullDirPath);
 
                 }
-                else if(!isHidden(dirItem->d_name,inStartDirectory))
-                    printf("%s\n",dirItem->d_name);
+
+
+
             }
             else//NOT IN START DIRECTORY
             {
-                if(!isHidden(dirItem->d_name,inStartDirectory) && isDirectory(&info))
+                if(!isHidden(dirItem->d_name,isDirectory(&info)) && isDirectory(&info))
                 {
                     DIR* dir = opendir(fullDirPath);
                     if(dir == NULL)
                         perror(fullDirPath);
                     else
                        printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
-             
                     
-                    printf("%s\n",fullDirPath);
+
+                    closedir(dir);
+
+                    
+                    char buffer[BUF_SIZE];
+                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                    printf("%-15s %s\n",buffer,fullDirPath);
 
                 }
-                else if(!isHidden(dirItem->d_name,inStartDirectory))
-                    printf("%s\n",fullDirPath);
-
-
-
-
-
-
-                /*
-                if(!isHidden(dirItem->d_name,inStartDirectory))
-                    printf("%s\n",fullDirPath);
-
-                    */
+                else if(!isHidden(dirItem->d_name,isDirectory(&info)))
+                {
+                    char buffer[BUF_SIZE];
+                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                    printf("%-15s %s\n",buffer,fullDirPath);
+                }
 
             }
         }

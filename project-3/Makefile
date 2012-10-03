@@ -7,4 +7,4 @@ clean:
 	rm -f du1
 
 run:all
-	./du1 
+	./du1 / 
