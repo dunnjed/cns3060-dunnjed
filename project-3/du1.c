@@ -18,6 +18,7 @@ int isDirectory(struct stat *info);
 void printDirContents(DIR *currentDir,char* dirPath, boolean inStartDirectory);
 
 
+
 char* currentDirPath = ".";
 
 int main(int argc, char *argv[])
@@ -41,9 +42,35 @@ int main(int argc, char *argv[])
     }
     else if(argc > 1)
     {
+
         int i;
         for(i = 1; i < argc; i++)
         {
+            /*
+            //This if statement will remove any trailing slashes that are found at the end of the given path  
+            //except in the case that the root directory was passed as an argument to du1.
+            if(strlen(argv[i]) > 1 && argv[i][strlen(argv[i]) - 1] == '/')
+            {
+                int index;
+                index = strlen(argv[i]) - 1;
+                while(argv[i][index] == '/')
+                {
+                    index--;
+                }
+
+                argv[i][index+1] = '\0';
+                
+            }*/
+            /*
+            H E L L O / / /
+            [H][E][L][L][O][\0]    array has length 6
+                                    strlen has length 5
+            
+            */
+           // removeExtraSlashesInPath(argv[i]);
+            
+
+
             struct stat info;
 
             if(stat(argv[i],&info) == -1)
@@ -105,15 +132,8 @@ int isDirectory(struct stat *info)
 int isHidden(char *fileName, boolean isA_Directory)
 {   
     if(strlen(fileName) == 1 && fileName[0] == '.')// . is always hidden
-        return IS_HIDDEN;// was IS_NOT_HIDDEN
-
-    //if(inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is not hidden in the start directory
-    //    return IS_HIDDEN;// was IS_NOT_HIDDEN
-    //else if(!inStartDirectory && strlen(fileName) == 1 && fileName[0] == '.')// . is hidden in subdirectories
-    //    return IS_HIDDEN;
-    else if(strlen(fileName) == 2 && fileName[0] == '.' && fileName[1] == '.')// .. is always hidden
         return IS_HIDDEN;
-    else if(strlen(fileName) > 1 && fileName[0] == '.' && !isA_Directory)//all other files and directories that begin with . are always hidden.
+    else if(strlen(fileName) == 2 && fileName[0] == '.' && fileName[1] == '.')// .. is always hidden
         return IS_HIDDEN;
     else
         return IS_NOT_HIDDEN;
@@ -138,8 +158,10 @@ void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
             snprintf(buffer,BUF_SIZE,"%lld B",(long long)tempInfo.st_size);
             printf("%-15s %s\n",buffer,dirPath);
         }
-           
-        if(strcmp(dirPath,"/") == 0)//If the dirPath is "/" and I'm in the start directory, then I don't want to append another "/" to the fullDirPath in the upcoming while loop.
+        //If the dirPath is "/" and I'm in the start directory, then I don't want
+        //to append another "/" to the fullDirPath in the upcoming while loop.
+        //This if statement takes care of that possibility.
+        if(strcmp(dirPath,"/") == 0)
             dirPath = "";
     }
 
@@ -169,63 +191,32 @@ void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
 
         else
         {
-            if(inStartDirectory)
-            {
+                            
                 
-                // The . directory isn't considered hidden when I'm in the start directory, but I don't want to traverse it
-
-                if(!isHidden(dirItem->d_name,isDirectory(&info)) && isDirectory(&info))// && dirItem->d_name[0] != '.')
-                {
-                    DIR* dir = opendir(fullDirPath);
-                    if(dir == NULL)
-                        perror(fullDirPath);
-                    else
-                       printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
-                    
-                    closedir(dir);
-                    
-                    char buffer[BUF_SIZE];
-                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
-                    printf("%-15s %s\n",buffer,fullDirPath);                   
-                }
-                else if(!isHidden(dirItem->d_name,isDirectory(&info)))
-                {
-                    char buffer[BUF_SIZE];
-                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
-                    printf("%-15s %s\n",buffer,fullDirPath);
-
-                }
-
-
-
-            }
-            else//NOT IN START DIRECTORY
+            if(!isHidden(dirItem->d_name,isDirectory(&info)) && isDirectory(&info))
             {
-                if(!isHidden(dirItem->d_name,isDirectory(&info)) && isDirectory(&info))
-                {
-                    DIR* dir = opendir(fullDirPath);
-                    if(dir == NULL)
-                        perror(fullDirPath);
-                    else
-                       printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
-                    
-
-                    closedir(dir);
-
-                    
-                    char buffer[BUF_SIZE];
-                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
-                    printf("%-15s %s\n",buffer,fullDirPath);
-
-                }
-                else if(!isHidden(dirItem->d_name,isDirectory(&info)))
-                {
-                    char buffer[BUF_SIZE];
-                    snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
-                    printf("%-15s %s\n",buffer,fullDirPath);
-                }
+                DIR* dir = opendir(fullDirPath);
+                if(dir == NULL)
+                    perror(fullDirPath);
+                else
+                   printDirContents(dir, fullDirPath, NOT_IN_START_DIRECTORY);
+                
+                closedir(dir);
+                
+                char buffer[BUF_SIZE];
+                snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                printf("%-15s %s\n",buffer,fullDirPath);                   
+            }
+            else if(!isHidden(dirItem->d_name,isDirectory(&info)))
+            {
+                char buffer[BUF_SIZE];
+                snprintf(buffer,BUF_SIZE,"%lld B",(long long)info.st_size);
+                printf("%-15s %s\n",buffer,fullDirPath);
 
             }
+
+
+            free(fullDirPath);
         }
     }
 
