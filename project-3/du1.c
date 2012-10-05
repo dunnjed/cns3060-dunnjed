@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <errno.h>
 
 typedef int boolean;
 #define IN_START_DIRECTORY 1
@@ -18,13 +19,10 @@ int isDirectory(struct stat *info);
 void printDirContents(DIR *currentDir,char* dirPath, boolean inStartDirectory);
 
 
-
 char* currentDirPath = ".";
 
 int main(int argc, char *argv[])
 {
-    printf("\nProgram starts here:\n");
-   
        
     if(argc == 1)
     {
@@ -46,30 +44,6 @@ int main(int argc, char *argv[])
         int i;
         for(i = 1; i < argc; i++)
         {
-            /*
-            //This if statement will remove any trailing slashes that are found at the end of the given path  
-            //except in the case that the root directory was passed as an argument to du1.
-            if(strlen(argv[i]) > 1 && argv[i][strlen(argv[i]) - 1] == '/')
-            {
-                int index;
-                index = strlen(argv[i]) - 1;
-                while(argv[i][index] == '/')
-                {
-                    index--;
-                }
-
-                argv[i][index+1] = '\0';
-                
-            }*/
-            /*
-            H E L L O / / /
-            [H][E][L][L][O][\0]    array has length 6
-                                    strlen has length 5
-            
-            */
-           // removeExtraSlashesInPath(argv[i]);
-            
-
 
             struct stat info;
 
@@ -141,7 +115,6 @@ int isHidden(char *fileName, boolean isA_Directory)
 
 
 
-//dirPath contains the path to the current directory being processed without the trailing "/"
 void printDirContents(DIR *currentDIR,char* dirPath, boolean inStartDirectory)
 {
     
