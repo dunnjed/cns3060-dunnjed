@@ -28,3 +28,17 @@ project-2/tags
 
 project-2/backup2
 project-2/README.md~
+
+
+#Files from project-3 that I want to ignore:
+
+project-3/dir.c
+project-3/dir1/
+project-3/dir2/
+project-3/dir3/
+project-3/du1Backup1.c
+project-3/du1Output.txt
+project-3/progOutline
+project-3/removeSlashesFunction.c
+project-3/tags
+project-3/tags2
