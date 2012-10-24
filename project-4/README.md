@@ -14,7 +14,7 @@ Summaries of Each Algorithm
 ---------------------------
 
 ###First Come First Served Algorithm###
-This was by far the easieset algorithm to implement. What this algorithm does is it visits each track in the order that
+This was by far the easiest algorithm to implement. What this algorithm does is it visits each track in the order that
 they are received. This is the worst algorithm because it can end up moving all over the disk. So this algorithm causes 
 the disk arm to end up traversing more tracks than the other algorithms. This algorithm's complexity is O(n).
 
@@ -38,5 +38,5 @@ from 15. Then I backtrack and visit the track that was closest to 15 but lower t
 is lower than 15, starting with the one that is closest to 15 and then reading down until I get to the one that is furthest from 
 track 15. I achieve this by reading all of the tracks into two separate vectors, one containing all of the tracks greater than 
 15 and the other containing all of the tracks lower than 15. I then sort these two vectors and visit all the tracks in the 
-appropriate order. I'm not sure of the compolexity of the sorting algorithm that the STL uses for the sort function. But visiting
+appropriate order. I'm not sure of the complexity of the sorting algorithm that the STL uses for the sort function. But visiting
 all of the tracks after they are sorted is O(n) complexity.
