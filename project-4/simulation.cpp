@@ -105,7 +105,6 @@ void shortestSeekTimeFirst(int trackNums[], int numOfTracksEntered)
         }
     }
     trackMovingTo = tracks[indexOfTrack];//I need to update the trackMovingTo variable to hold the value of the track that I will move to next.
-    tracksTraversed;// = traverseDistance;//
     
     std::ostringstream movement;//Using the stringstream allows me to easily concatenate numbers into a string.
     
@@ -140,7 +139,6 @@ void shortestSeekTimeFirst(int trackNums[], int numOfTracksEntered)
             }
         }
         trackMovingTo = tracks[indexOfTrack];//I need to update the trackMovingTo variable to hold the value of the track that I will move to next.
-        tracksTraversed;// = traverseDistance;
 
         movement << "Tracks " << currentTrack << "-" << trackMovingTo;
         std::cout << std::setw(fieldWidth) << movement.str() << tracksTraversed << std::endl;
