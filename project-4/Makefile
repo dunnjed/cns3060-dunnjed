@@ -1,6 +1,6 @@
-all:du1
+all:simulation
 
-du1:
+simulation:
 	g++ simulation.cpp -o simulation -g
 
 clean:
