@@ -7,7 +7,6 @@ int count;
 
 int main(int argc, char* argv[])
 {
-    printf("PartA\n");
 
     pthread_t threadOne;
     pthread_t threadTwo;
